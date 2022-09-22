@@ -43,13 +43,18 @@
         <package name="com.demo1.model"/>
     </typeAliases>
 
+    <typeHandlers>
+        <typeHandler handler="com.demo1.type.ExampleTypeHandler" javaType="com.demo1.model.User2" jdbcType="NULL"/>
+        <package name="com.demo1.type"/>
+    </typeHandlers>
+
     <objectFactory type="com.demo1.factory.ExampleObjectFactory">
         <property name="someProperty" value="100"/>
     </objectFactory>
 
-    <objectWrapperFactory type="com.demo1.wrapper.ExampleObjectWrapperFactory"/>
+<!--    <objectWrapperFactory type="com.demo1.wrapper.ExampleObjectWrapperFactory"/>-->
     
-    <reflectorFactory type="com.demo1.reflector.ExampleReflectorFactory"/>
+<!--    <reflectorFactory type="com.demo1.reflector.ExampleReflectorFactory"/>-->
     
     <plugins>
         <plugin interceptor="com.demo1.plugin.ExamplePlugin">
@@ -77,6 +82,7 @@
             </dataSource>
         </environment>
     </environments>
+
     <mappers>
         <package name="com.demo1.mapper"/>
     </mappers>

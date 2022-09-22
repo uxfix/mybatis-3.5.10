@@ -20,7 +20,8 @@ public class Demo1 {
         Properties demoProperties = Resources.getResourceAsProperties("demo.properties");
         String resource = "mybatis-config.xml";
         InputStream inputStream = Resources.getResourceAsStream(resource);
-        SqlSessionFactory sqlSessionFactory = new SqlSessionFactoryBuilder().build(inputStream,"sit",demoProperties);
+        SqlSessionFactory sqlSessionFactory = new SqlSessionFactoryBuilder()
+                .build(inputStream,"sit",demoProperties);
         SqlSession sqlSession = sqlSessionFactory.openSession();
         UserMapper userMapper = sqlSession.getMapper(UserMapper.class);
         userMapper.insert("Mybatis");
