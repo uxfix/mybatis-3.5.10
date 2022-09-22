@@ -19,4 +19,6 @@ public interface UserMapper {
 
     @Select("select * from user")
     List<User> getAll();
+
+    List<User> selectAllXml(User user);
 }

@@ -1,5 +1,6 @@
 package com.demo1.type;
 
+
 import com.demo1.model.User2;
 import org.apache.ibatis.type.BaseTypeHandler;
 import org.apache.ibatis.type.JdbcType;
