@@ -3,7 +3,10 @@
         PUBLIC "-//mybatis.org//DTD Config 3.0//EN"
         "https://mybatis.org/dtd/mybatis-3-config.dtd">
 <configuration>
-    <properties resource="jdbc.properties"></properties>
+    <properties resource="jdbc.properties">
+        <property name="username" value="admin"/>
+        <property name="password" value="1234"/>
+    </properties>
 
     <settings>
         <setting name="cacheEnabled" value="true"/>
@@ -40,8 +43,31 @@
         <package name="com.demo1.model"/>
     </typeAliases>
 
-    <environments default="development">
-        <environment id="development">
+    <objectFactory type="com.demo1.factory.ExampleObjectFactory">
+        <property name="someProperty" value="100"/>
+    </objectFactory>
+
+    <objectWrapperFactory type="com.demo1.wrapper.ExampleObjectWrapperFactory"/>
+    
+    <reflectorFactory type="com.demo1.reflector.ExampleReflectorFactory"/>
+    
+    <plugins>
+        <plugin interceptor="com.demo1.plugin.ExamplePlugin">
+            <property name="someProperty" value="100"/>
+        </plugin>
+    </plugins>
+
+    <environments default="dev">
+        <environment id="sit">
+            <transactionManager type="JDBC"/>
+            <dataSource type="POOLED">
+                <property name="driver" value="${jdbc.driverClass}"/>
+                <property name="url" value="${jdbc.jdbcUrl}"/>
+                <property name="username" value="${jdbc.user}"/>
+                <property name="password" value="${jdbc.password}"/>
+            </dataSource>
+        </environment>
+        <environment id="dev">
             <transactionManager type="JDBC"/>
             <dataSource type="POOLED">
                 <property name="driver" value="${jdbc.driverClass}"/>

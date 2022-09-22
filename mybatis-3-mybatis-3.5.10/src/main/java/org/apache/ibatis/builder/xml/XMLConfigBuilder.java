@@ -15,12 +15,6 @@
  */
 package org.apache.ibatis.builder.xml;
 
-import java.io.InputStream;
-import java.io.Reader;
-import java.util.Properties;
-
-import javax.sql.DataSource;
-
 import org.apache.ibatis.builder.BaseBuilder;
 import org.apache.ibatis.builder.BuilderException;
 import org.apache.ibatis.datasource.DataSourceFactory;
@@ -39,13 +33,14 @@ import org.apache.ibatis.reflection.MetaClass;
 import org.apache.ibatis.reflection.ReflectorFactory;
 import org.apache.ibatis.reflection.factory.ObjectFactory;
 import org.apache.ibatis.reflection.wrapper.ObjectWrapperFactory;
-import org.apache.ibatis.session.AutoMappingBehavior;
-import org.apache.ibatis.session.AutoMappingUnknownColumnBehavior;
-import org.apache.ibatis.session.Configuration;
-import org.apache.ibatis.session.ExecutorType;
-import org.apache.ibatis.session.LocalCacheScope;
+import org.apache.ibatis.session.*;
 import org.apache.ibatis.transaction.TransactionFactory;
 import org.apache.ibatis.type.JdbcType;
+
+import javax.sql.DataSource;
+import java.io.InputStream;
+import java.io.Reader;
+import java.util.Properties;
 
 /**
  * @author Clinton Begin
@@ -83,8 +78,10 @@ public class XMLConfigBuilder extends BaseBuilder {
   }
 
   private XMLConfigBuilder(XPathParser parser, String environment, Properties props) {
+    // 创建配置对象
     super(new Configuration());
     ErrorContext.instance().resource("SQL Mapper Configuration");
+    // 设置外部传进来的 Properties 配置对象
     this.configuration.setVariables(props);
     this.parsed = false;
     this.environment = environment;
@@ -92,17 +89,18 @@ public class XMLConfigBuilder extends BaseBuilder {
   }
 
   public Configuration parse() {
+    // 判断是否解析过了，重复解析抛异常
     if (parsed) {
       throw new BuilderException("Each XMLConfigBuilder can only be used once.");
     }
     parsed = true;
+    // 解析 xml 配置文件 /configuration 节点
     parseConfiguration(parser.evalNode("/configuration"));
     return configuration;
   }
 
   private void parseConfiguration(XNode root) {
     try {
-      // issue #117 read properties first
       propertiesElement(root.evalNode("properties"));
       Properties settings = settingsAsProperties(root.evalNode("settings"));
       loadCustomVfs(settings);
@@ -112,8 +110,10 @@ public class XMLConfigBuilder extends BaseBuilder {
       objectFactoryElement(root.evalNode("objectFactory"));
       objectWrapperFactoryElement(root.evalNode("objectWrapperFactory"));
       reflectorFactoryElement(root.evalNode("reflectorFactory"));
+      // 对 <settings> 标签设置的属性，创建其对象
       settingsElement(settings);
       // read it after objectFactory and objectWrapperFactory issue #631
+      // 设置数据源和事务管理器
       environmentsElement(root.evalNode("environments"));
       databaseIdProviderElement(root.evalNode("databaseIdProvider"));
       typeHandlerElement(root.evalNode("typeHandlers"));
@@ -128,10 +128,12 @@ public class XMLConfigBuilder extends BaseBuilder {
       return new Properties();
     }
     Properties props = context.getChildrenAsProperties();
-    // Check that all settings are known to the configuration class
+    // 解析配置类生成获取设置的成员变量属性
     MetaClass metaConfig = MetaClass.forClass(Configuration.class, localReflectorFactory);
+    // 判断 <settings> 节点下的所有键是否是合法的
     for (Object key : props.keySet()) {
       if (!metaConfig.hasSetter(String.valueOf(key))) {
+        // 如果你定义的键，位置配置类找到对应的属性会抛异常
         throw new BuilderException("The setting " + key + " is not known.  Make sure you spelled it correctly (case sensitive).");
       }
     }
@@ -161,7 +163,11 @@ public class XMLConfigBuilder extends BaseBuilder {
     if (parent != null) {
       for (XNode child : parent.getChildren()) {
         if ("package".equals(child.getName())) {
+          // 解析 <package/>
           String typeAliasPackage = child.getStringAttribute("name");
+          // 关于这种指定包的类型，其实最终扫描你指定包下的所有类，忽略接口，内部类，package-info.java
+          // 拿到这些类以后，会先检查你是否有设置 @Alias 注解，如果没有的话去类名首字母小写作为别名
+          // 然后注册到 typeAliases Map 集合
           configuration.getTypeAliasRegistry().registerAliases(typeAliasPackage);
         } else {
           String alias = child.getStringAttribute("alias");
@@ -185,9 +191,13 @@ public class XMLConfigBuilder extends BaseBuilder {
     if (parent != null) {
       for (XNode child : parent.getChildren()) {
         String interceptor = child.getStringAttribute("interceptor");
+        // 获取 <plugin/> 下的 property
         Properties properties = child.getChildrenAsProperties();
+        // 反射创建对象
         Interceptor interceptorInstance = (Interceptor) resolveClass(interceptor).getDeclaredConstructor().newInstance();
+        // 设置获取到的 Properties
         interceptorInstance.setProperties(properties);
+        // 添加到配置类
         configuration.addInterceptor(interceptorInstance);
       }
     }
@@ -197,7 +207,9 @@ public class XMLConfigBuilder extends BaseBuilder {
     if (context != null) {
       String type = context.getStringAttribute("type");
       Properties properties = context.getChildrenAsProperties();
+      // 反射创建对象
       ObjectFactory factory = (ObjectFactory) resolveClass(type).getDeclaredConstructor().newInstance();
+      // 设置解析 property 解析到的 Properties
       factory.setProperties(properties);
       configuration.setObjectFactory(factory);
     }
@@ -221,21 +233,30 @@ public class XMLConfigBuilder extends BaseBuilder {
 
   private void propertiesElement(XNode context) throws Exception {
     if (context != null) {
+      // 解析properties节点内的 name value 属性封装成 Properties 对象
       Properties defaults = context.getChildrenAsProperties();
+      // 获取 properties 节点 resource 属性
       String resource = context.getStringAttribute("resource");
+      //  获取 properties 节点 url 属性
       String url = context.getStringAttribute("url");
+      // url 和 resource 只能指定一个，如果两个都设置了抛出异常
       if (resource != null && url != null) {
         throw new BuilderException("The properties element cannot specify both a URL and a resource based property file reference.  Please specify one or the other.");
       }
       if (resource != null) {
+        // 将 resource 指定的 Properties 配置文件加载合并到 defaults Properties
         defaults.putAll(Resources.getResourceAsProperties(resource));
       } else if (url != null) {
+        // 将 url 指定的 Properties 配置文件加载合并到 defaults Properties
         defaults.putAll(Resources.getUrlAsProperties(url));
       }
+      // 获取 configuration 已存在的 Properties
       Properties vars = configuration.getVariables();
       if (vars != null) {
+        // 如果有的话，合并到一起
         defaults.putAll(vars);
       }
+      // 设置保存解析好的 Properties
       parser.setVariables(defaults);
       configuration.setVariables(defaults);
     }

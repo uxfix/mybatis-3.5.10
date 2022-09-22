@@ -8,6 +8,7 @@ import org.apache.ibatis.session.SqlSessionFactoryBuilder;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Properties;
 
 /**
  * @author Yuan
@@ -16,9 +17,10 @@ import java.io.InputStream;
  */
 public class Demo1 {
     public static void main(String[] args) throws IOException {
+        Properties demoProperties = Resources.getResourceAsProperties("demo.properties");
         String resource = "mybatis-config.xml";
         InputStream inputStream = Resources.getResourceAsStream(resource);
-        SqlSessionFactory sqlSessionFactory = new SqlSessionFactoryBuilder().build(inputStream);
+        SqlSessionFactory sqlSessionFactory = new SqlSessionFactoryBuilder().build(inputStream,"sit",demoProperties);
         SqlSession sqlSession = sqlSessionFactory.openSession();
         UserMapper userMapper = sqlSession.getMapper(UserMapper.class);
         userMapper.insert("Mybatis");
