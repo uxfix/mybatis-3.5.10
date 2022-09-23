@@ -128,13 +128,15 @@ public class XMLConfigBuilder extends BaseBuilder {
     if (context == null) {
       return new Properties();
     }
+    // 拿到 <settings> 标签下的所有子标签 <setting>
+    // 并获取 <setting> 标签的 name value 属性转换成 Properties 对象
     Properties props = context.getChildrenAsProperties();
     // 解析配置类生成获取设置的成员变量属性
     MetaClass metaConfig = MetaClass.forClass(Configuration.class, localReflectorFactory);
     // 判断 <settings> 节点下的所有键是否是合法的
     for (Object key : props.keySet()) {
       if (!metaConfig.hasSetter(String.valueOf(key))) {
-        // 如果你定义的键，位置配置类找到对应的属性会抛异常
+        // 如果你定义的键，在配置类找到对应的属性会抛异常
         throw new BuilderException("The setting " + key + " is not known.  Make sure you spelled it correctly (case sensitive).");
       }
     }
@@ -219,6 +221,7 @@ public class XMLConfigBuilder extends BaseBuilder {
   private void objectWrapperFactoryElement(XNode context) throws Exception {
     if (context != null) {
       String type = context.getStringAttribute("type");
+      // 反射创建对象
       ObjectWrapperFactory factory = (ObjectWrapperFactory) resolveClass(type).getDeclaredConstructor().newInstance();
       configuration.setObjectWrapperFactory(factory);
     }
@@ -252,6 +255,7 @@ public class XMLConfigBuilder extends BaseBuilder {
         defaults.putAll(Resources.getUrlAsProperties(url));
       }
       // 获取 configuration 已存在的 Properties
+      // 比方说你在 build 的方法参数传入了一个 Properties
       Properties vars = configuration.getVariables();
       if (vars != null) {
         // 如果有的话，合并到一起
@@ -298,11 +302,14 @@ public class XMLConfigBuilder extends BaseBuilder {
 
   private void environmentsElement(XNode context) throws Exception {
     if (context != null) {
+      // 先检查 build 时是否指定 environment
       if (environment == null) {
+        // 没有指定的话，获取 <environments> 标签的 default 属性
         environment = context.getStringAttribute("default");
       }
       for (XNode child : context.getChildren()) {
         String id = child.getStringAttribute("id");
+        // 检查当前遍历的 <environment> 标签 id 属性是否与 environment 一致
         if (isSpecifiedEnvironment(id)) {
           TransactionFactory txFactory = transactionManagerElement(child.evalNode("transactionManager"));
           DataSourceFactory dsFactory = dataSourceElement(child.evalNode("dataSource"));
@@ -325,12 +332,15 @@ public class XMLConfigBuilder extends BaseBuilder {
       if ("VENDOR".equals(type)) {
         type = "DB_VENDOR";
       }
+      // 解析 <databaseIdProvider> 标签
       Properties properties = context.getChildrenAsProperties();
       databaseIdProvider = (DatabaseIdProvider) resolveClass(type).getDeclaredConstructor().newInstance();
       databaseIdProvider.setProperties(properties);
     }
+    // 获取环境变量对象
     Environment environment = configuration.getEnvironment();
     if (environment != null && databaseIdProvider != null) {
+      // 根据 DataSource 确定现在到底使用的什么数据库
       String databaseId = databaseIdProvider.getDatabaseId(environment.getDataSource());
       configuration.setDatabaseId(databaseId);
     }
@@ -389,7 +399,7 @@ public class XMLConfigBuilder extends BaseBuilder {
     if (parent != null) {
       for (XNode child : parent.getChildren()) {
         if ("package".equals(child.getName())) {
-          // 扫描指定包下的所有接口，解析成为 mapper
+          // 解析 <package name="org.mybatis.builder"/>
           String mapperPackage = child.getStringAttribute("name");
           configuration.addMappers(mapperPackage);
         } else {
@@ -397,18 +407,21 @@ public class XMLConfigBuilder extends BaseBuilder {
           String url = child.getStringAttribute("url");
           String mapperClass = child.getStringAttribute("class");
           if (resource != null && url == null && mapperClass == null) {
+            // 解析 <mapper resource="org/mybatis/builder/AuthorMapper.xml"/>
             ErrorContext.instance().resource(resource);
             try(InputStream inputStream = Resources.getResourceAsStream(resource)) {
               XMLMapperBuilder mapperParser = new XMLMapperBuilder(inputStream, configuration, resource, configuration.getSqlFragments());
               mapperParser.parse();
             }
           } else if (resource == null && url != null && mapperClass == null) {
+            // 解析 <mapper url="file:///var/mappers/AuthorMapper.xml"/>
             ErrorContext.instance().resource(url);
             try(InputStream inputStream = Resources.getUrlAsStream(url)){
               XMLMapperBuilder mapperParser = new XMLMapperBuilder(inputStream, configuration, url, configuration.getSqlFragments());
               mapperParser.parse();
             }
           } else if (resource == null && url == null && mapperClass != null) {
+            // <mapper class="org.mybatis.builder.AuthorMapper"/>
             Class<?> mapperInterface = Resources.classForName(mapperClass);
             configuration.addMapper(mapperInterface);
           } else {

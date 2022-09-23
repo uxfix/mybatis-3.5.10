@@ -1,9 +1,6 @@
 package com.demo1.mapper;
 
 import com.demo1.model.User;
-import org.apache.ibatis.annotations.Insert;
-import org.apache.ibatis.annotations.Param;
-import org.apache.ibatis.annotations.Select;
 
 import java.util.List;
 
@@ -14,11 +11,13 @@ import java.util.List;
  */
 public interface UserMapper {
 
-    @Insert("insert into user (name) values (#{name})")
-    void insert(@Param("name") String name);
+    List<User> select1(User user);
 
-    @Select("select * from user")
-    List<User> getAll();
+    List<User> select2(User user);
 
-    List<User> selectAllXml(User user);
+    List<User> select3(User user);
+
+    List<User> select4(User user);
+
+    List<User> update1(User user);
 }

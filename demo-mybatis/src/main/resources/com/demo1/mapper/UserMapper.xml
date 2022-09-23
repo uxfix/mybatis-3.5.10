@@ -3,21 +3,67 @@
         PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.demo1.mapper.UserMapper">
-<!--  引用其它命名空间的缓存配置  -->
-    <cache-ref namespace="com.someone.application.data.SomeMapper"/>
 
-    <cache
-            eviction="FIFO"
-            flushInterval="60000"
-            size="512"
-            readOnly="true"/>
-
-    <select id="selectAllXml" resultType="user">
-        select * from user
+    <select id="select1" resultType="user">
+        SELECT * FROM user
         <where>
-            <if test="id != null">
-                id = #{id}
+            <if test="name != null and name != ''">
+                AND name like #{name}
+            </if>
+            <if test="mobileNo != null and mobileNo != ''">
+                AND mobile_no like #{mobileNo}
             </if>
         </where>
     </select>
+
+    <select id="select2" resultType="user">
+        SELECT * FROM user
+        <choose>
+            <when test="name != null and name != ''">
+                AND name like #{name}
+            </when>
+            <when test="mobileNo != null and mobileNo != ''">
+                AND mobile_no like #{mobileNo}
+            </when>
+            <otherwise>
+                AND id != 0
+            </otherwise>
+        </choose>
+    </select>
+
+    <select id="select3" resultType="user">
+        SELECT * FROM user
+        <choose>
+            <when test="name != null and name != ''">
+                AND name like #{name}
+            </when>
+            <when test="mobileNo != null and mobileNo != ''">
+                AND mobile_no like #{mobileNo}
+            </when>
+            <otherwise>
+                AND id != 0
+            </otherwise>
+        </choose>
+    </select>
+
+    <select id="select4" resultType="user">
+        SELECT * FROM user
+        <where>
+            <foreach item="item" index="index" collection="list"
+                     open="ID in (" separator="," close=")" nullable="true">
+                #{item}
+            </foreach>
+        </where>
+    </select>
+
+    <update id="update1">
+        update user
+        <set>
+            <if test="name != null">name=#{name},</if>
+            <if test="age != null">age=#{age},</if>
+            <if test="mobileNo != null">mobile_no=#{mobileNo},</if>
+            <if test="gender != null">gender=#{gender}</if>
+        </set>
+        where id=#{id}
+    </update>
 </mapper>

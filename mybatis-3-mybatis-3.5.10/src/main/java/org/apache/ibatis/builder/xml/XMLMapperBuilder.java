@@ -99,12 +99,17 @@ public class XMLMapperBuilder extends BaseBuilder {
       }
       // 命名空间设置并检查是否一致
       builderAssistant.setCurrentNamespace(namespace);
-      // 引用其它命名空间的缓存配置
+      // 解析引用其它命名空间的缓存配置
       cacheRefElement(context.evalNode("cache-ref"));
+      // 解析二级缓存
       cacheElement(context.evalNode("cache"));
+      // 解析 parameterMap
       parameterMapElement(context.evalNodes("/mapper/parameterMap"));
+      // 解析 resultMap
       resultMapElements(context.evalNodes("/mapper/resultMap"));
+      // 解析 sql 片段，并未转换成对象
       sqlElement(context.evalNodes("/mapper/sql"));
+      // 解析 select insert update delete
       buildStatementFromContext(context.evalNodes("select|insert|update|delete"));
     } catch (Exception e) {
       throw new BuilderException("Error parsing Mapper XML. The XML location is '" + resource + "'. Cause: " + e, e);
@@ -113,8 +118,10 @@ public class XMLMapperBuilder extends BaseBuilder {
 
   private void buildStatementFromContext(List<XNode> list) {
     if (configuration.getDatabaseId() != null) {
+      // 如果开启了数据库厂商标识功能，优先获取与 DatabaseId 匹配的
       buildStatementFromContext(list, configuration.getDatabaseId());
     }
+    // 最后再获取没有指定 DatabaseId 的
     buildStatementFromContext(list, null);
   }
 
@@ -188,15 +195,23 @@ public class XMLMapperBuilder extends BaseBuilder {
 
   private void cacheElement(XNode context) {
     if (context != null) {
+      // 根据标签 type 属性指定缓存实现类，默认 PERPETUAL
       String type = context.getStringAttribute("type", "PERPETUAL");
+      // 去别名注册类找到对应的类型
       Class<? extends Cache> typeClass = typeAliasRegistry.resolveAlias(type);
+      // 根据标签 eviction 属性指定清除策略，默认 LRU
       String eviction = context.getStringAttribute("eviction", "LRU");
+      // 去别名注册类找到对应的类型
       Class<? extends Cache> evictionClass = typeAliasRegistry.resolveAlias(eviction);
+      // 刷新间隔
       Long flushInterval = context.getLongAttribute("flushInterval");
+      // 引用数目
       Integer size = context.getIntAttribute("size");
+      // 只读
       boolean readWrite = !context.getBooleanAttribute("readOnly", false);
       boolean blocking = context.getBooleanAttribute("blocking", false);
       Properties props = context.getChildrenAsProperties();
+      // 创建缓存对象
       builderAssistant.useNewCache(typeClass, evictionClass, flushInterval, size, readWrite, blocking, props);
     }
   }
@@ -256,8 +271,10 @@ public class XMLMapperBuilder extends BaseBuilder {
     List<XNode> resultChildren = resultMapNode.getChildren();
     for (XNode resultChild : resultChildren) {
       if ("constructor".equals(resultChild.getName())) {
+        // 解析 <constructor> 标签，构造方法注入映射
         processConstructorElement(resultChild, typeClass, resultMappings);
       } else if ("discriminator".equals(resultChild.getName())) {
+        // 解析 <discriminator> 标签，类似于 switch 语句
         discriminator = processDiscriminatorElement(resultChild, typeClass, resultMappings);
       } else {
         List<ResultFlag> flags = new ArrayList<>();
@@ -323,9 +340,12 @@ public class XMLMapperBuilder extends BaseBuilder {
   }
 
   private void sqlElement(List<XNode> list) {
+    // 判断是否有开启
     if (configuration.getDatabaseId() != null) {
+      // 先查找与 DatabaseId 匹配的
       sqlElement(list, configuration.getDatabaseId());
     }
+    // 再查找没有 DatabaseId 的，如果存在冲突会被抛弃
     sqlElement(list, null);
   }
 
@@ -333,6 +353,7 @@ public class XMLMapperBuilder extends BaseBuilder {
     for (XNode context : list) {
       String databaseId = context.getStringAttribute("databaseId");
       String id = context.getStringAttribute("id");
+      // 创建id，Namespace + id
       id = builderAssistant.applyCurrentNamespace(id, false);
       if (databaseIdMatchesCurrent(id, databaseId, requiredDatabaseId)) {
         sqlFragments.put(id, context);
