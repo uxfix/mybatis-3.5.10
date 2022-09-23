@@ -79,6 +79,7 @@ public class XMLMapperBuilder extends BaseBuilder {
       configurationElement(parser.evalNode("/mapper"));
       // 将 resource 添加到 Set 集合，代表已经解析过了
       configuration.addLoadedResource(resource);
+      // 绑定 xml 文件对应的接口类型
       bindMapperForNamespace();
     }
 
