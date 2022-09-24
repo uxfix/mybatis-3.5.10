@@ -9,6 +9,13 @@
         <package name="com.demo1.model"/>
     </typeAliases>
 
+    <plugins>
+        <plugin interceptor="com.demo1.interceptor.MyExecutorInterceptor"/>
+        <plugin interceptor="com.demo1.interceptor.MyStatementHandlerInterceptor"/>
+        <plugin interceptor="com.demo1.interceptor.MyParameterHandlerInterceptor"/>
+        <plugin interceptor="com.demo1.interceptor.MyResultSetHandlerInterceptor"/>
+    </plugins>
+
     <environments default="dev">
         <environment id="sit">
             <transactionManager type="JDBC"/>

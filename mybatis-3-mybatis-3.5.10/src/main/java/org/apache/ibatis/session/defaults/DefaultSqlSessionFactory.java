@@ -40,6 +40,7 @@ public class DefaultSqlSessionFactory implements SqlSessionFactory {
 
   @Override
   public SqlSession openSession() {
+    // 获取默认的 Executor 执行器类型，来创建 SqlSession
     return openSessionFromDataSource(configuration.getDefaultExecutorType(), null, false);
   }
 
@@ -94,6 +95,7 @@ public class DefaultSqlSessionFactory implements SqlSessionFactory {
       tx = transactionFactory.newTransaction(environment.getDataSource(), level, autoCommit);
       // 创建执行器对象
       final Executor executor = configuration.newExecutor(tx, execType);
+      // 将 Executor 包装到 DefaultSqlSession 返回
       return new DefaultSqlSession(configuration, executor, autoCommit);
     } catch (Exception e) {
       closeTransaction(tx); // may have fetched a connection so lets call close()

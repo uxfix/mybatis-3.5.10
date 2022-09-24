@@ -15,21 +15,15 @@
  */
 package org.apache.ibatis.reflection;
 
-import java.lang.annotation.Annotation;
-import java.lang.reflect.Method;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.SortedMap;
-import java.util.TreeMap;
-
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.binding.MapperMethod.ParamMap;
 import org.apache.ibatis.session.Configuration;
 import org.apache.ibatis.session.ResultHandler;
 import org.apache.ibatis.session.RowBounds;
+
+import java.lang.annotation.Annotation;
+import java.lang.reflect.Method;
+import java.util.*;
 
 public class ParamNameResolver {
 
@@ -62,10 +56,12 @@ public class ParamNameResolver {
     int paramCount = paramAnnotations.length;
     // get names from @Param annotations
     for (int paramIndex = 0; paramIndex < paramCount; paramIndex++) {
+      // 判断参数类似是不是 RowBounds 或 ResultHandler
       if (isSpecialParameter(paramTypes[paramIndex])) {
-        // skip special parameters
+        // 如果是的话跳过解析
         continue;
       }
+      // 判断参数是否有 @Param 注解
       String name = null;
       for (Annotation annotation : paramAnnotations[paramIndex]) {
         if (annotation instanceof Param) {
@@ -75,8 +71,9 @@ public class ParamNameResolver {
         }
       }
       if (name == null) {
-        // @Param was not specified.
+        // 如果没有 @Param 注解
         if (useActualParamName) {
+          // 获取方法的形参名字，需要给java编译器添加 -parameters，且jdk大于等于8
           name = getActualParamName(method, paramIndex);
         }
         if (name == null) {

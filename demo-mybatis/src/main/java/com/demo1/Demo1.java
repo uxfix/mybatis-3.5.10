@@ -3,6 +3,7 @@ package com.demo1;
 import com.demo1.mapper.UserMapper;
 import com.demo1.model.User;
 import org.apache.ibatis.io.Resources;
+import org.apache.ibatis.session.RowBounds;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.ibatis.session.SqlSessionFactory;
 import org.apache.ibatis.session.SqlSessionFactoryBuilder;
@@ -42,7 +43,8 @@ public class Demo1 {
         SqlSession sqlSession = sqlSessionFactory.openSession();
         UserMapper userMapper = sqlSession.getMapper(UserMapper.class);
         User user = new User();
-        List<User> userList = userMapper.select1(user);
+        RowBounds rowBounds = new RowBounds(1,20);
+        List<User> userList = userMapper.select1("李四",rowBounds,22,"188110");
         System.out.println(userList);
         sqlSession.close();
     }

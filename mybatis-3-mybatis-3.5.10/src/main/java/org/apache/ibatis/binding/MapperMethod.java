@@ -15,15 +15,6 @@
  */
 package org.apache.ibatis.binding;
 
-import java.lang.reflect.Array;
-import java.lang.reflect.Method;
-import java.lang.reflect.ParameterizedType;
-import java.lang.reflect.Type;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-
 import org.apache.ibatis.annotations.Flush;
 import org.apache.ibatis.annotations.MapKey;
 import org.apache.ibatis.cursor.Cursor;
@@ -38,6 +29,15 @@ import org.apache.ibatis.session.ResultHandler;
 import org.apache.ibatis.session.RowBounds;
 import org.apache.ibatis.session.SqlSession;
 
+import java.lang.reflect.Array;
+import java.lang.reflect.Method;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+
 /**
  * @author Clinton Begin
  * @author Eduardo Macarron
@@ -50,12 +50,15 @@ public class MapperMethod {
   private final MethodSignature method;
 
   public MapperMethod(Class<?> mapperInterface, Method method, Configuration config) {
+    // 确定 SQL 操作类型
     this.command = new SqlCommand(config, mapperInterface, method);
+    // 确定方法的形参位置，以及返回值类型判断
     this.method = new MethodSignature(config, mapperInterface, method);
   }
 
   public Object execute(SqlSession sqlSession, Object[] args) {
     Object result;
+    // 根据 SQL 操作的类型不同，调用不同的方法
     switch (command.getType()) {
       case INSERT: {
         Object param = method.convertArgsToSqlCommandParam(args);
@@ -74,13 +77,17 @@ public class MapperMethod {
       }
       case SELECT:
         if (method.returnsVoid() && method.hasResultHandler()) {
+          // 如果方法返回值为 void，并且方法参数有 ResultHandler
           executeWithResultHandler(sqlSession, args);
           result = null;
         } else if (method.returnsMany()) {
+          // 如果方法返回值为集合或数组
           result = executeForMany(sqlSession, args);
         } else if (method.returnsMap()) {
+          // 如果方法返回值为Map 集合
           result = executeForMap(sqlSession, args);
         } else if (method.returnsCursor()) {
+          // 如果方法返回值为游标
           result = executeForCursor(sqlSession, args);
         } else {
           Object param = method.convertArgsToSqlCommandParam(args);
@@ -139,8 +146,12 @@ public class MapperMethod {
 
   private <E> Object executeForMany(SqlSession sqlSession, Object[] args) {
     List<E> result;
+    // 对参数进行转换，别名映射以及索引映射
+    // 比方说 我有一参数 String name 实际值为 李四
+    // 那么经过转换 name => 李四 param1 => 李四
     Object param = method.convertArgsToSqlCommandParam(args);
     if (method.hasRowBounds()) {
+      // 如果方法参数有 RowBounds，通过预先找到的索引位置，取出RowBounds
       RowBounds rowBounds = method.extractRowBounds(args);
       result = sqlSession.selectList(command.getName(), param, rowBounds);
     } else {
@@ -224,11 +235,14 @@ public class MapperMethod {
     public SqlCommand(Configuration configuration, Class<?> mapperInterface, Method method) {
       final String methodName = method.getName();
       final Class<?> declaringClass = method.getDeclaringClass();
+      // 解析该方法对应的 MappedStatement，即 SQL 片段
       MappedStatement ms = resolveMappedStatement(mapperInterface, methodName, declaringClass,
           configuration);
       if (ms == null) {
+        // 如果没找到对应的 SQL 片段，那么检查是否有 @Flush 注解
         if (method.getAnnotation(Flush.class) != null) {
           name = null;
+          // 设置 SQL 操作类型为 FLUSH
           type = SqlCommandType.FLUSH;
         } else {
           throw new BindingException("Invalid bound statement (not found): "
@@ -253,12 +267,15 @@ public class MapperMethod {
 
     private MappedStatement resolveMappedStatement(Class<?> mapperInterface, String methodName,
         Class<?> declaringClass, Configuration configuration) {
+      // 接口名字 + 方法名字组成 statementId
       String statementId = mapperInterface.getName() + "." + methodName;
       if (configuration.hasStatement(statementId)) {
+        // 通过配置类去获取对应的 MappedStatement
         return configuration.getMappedStatement(statementId);
       } else if (mapperInterface.equals(declaringClass)) {
         return null;
       }
+      // 检查是否有父类，判断父类是否能找到对应 MappedStatement
       for (Class<?> superInterface : mapperInterface.getInterfaces()) {
         if (declaringClass.isAssignableFrom(superInterface)) {
           MappedStatement ms = resolveMappedStatement(superInterface, methodName,
@@ -290,18 +307,28 @@ public class MapperMethod {
       if (resolvedReturnType instanceof Class<?>) {
         this.returnType = (Class<?>) resolvedReturnType;
       } else if (resolvedReturnType instanceof ParameterizedType) {
+        // 判断是不是泛化类型
         this.returnType = (Class<?>) ((ParameterizedType) resolvedReturnType).getRawType();
       } else {
         this.returnType = method.getReturnType();
       }
+      // 返回值是否为 void
       this.returnsVoid = void.class.equals(this.returnType);
+      // 返回值是否为数组或集合
       this.returnsMany = configuration.getObjectFactory().isCollection(this.returnType) || this.returnType.isArray();
+      // 是否游标查询
       this.returnsCursor = Cursor.class.equals(this.returnType);
+      // 是否为 Optional 封装
       this.returnsOptional = Optional.class.equals(this.returnType);
+      // 检查是否有 @MapKey
       this.mapKey = getMapKey(method);
+      // 检查返回结果是否为 Map 集合
       this.returnsMap = this.mapKey != null;
+      // 确定 RowBounds 在方法参数的索引位置
       this.rowBoundsIndex = getUniqueParamIndex(method, RowBounds.class);
+      // 确定 ResultHandler 在方法参数的索引位置
       this.resultHandlerIndex = getUniqueParamIndex(method, ResultHandler.class);
+      // 解析方法的索引以及对应形参名字
       this.paramNameResolver = new ParamNameResolver(configuration, method);
     }
 

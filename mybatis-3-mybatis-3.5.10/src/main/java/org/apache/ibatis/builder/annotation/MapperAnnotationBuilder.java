@@ -72,29 +72,41 @@ public class MapperAnnotationBuilder {
   }
 
   public void parse() {
+    // interface com.demo.mapper.UserMapper
     String resource = type.toString();
+    // 判断是否已经解析过
     if (!configuration.isResourceLoaded(resource)) {
-      // 解析 Mapper.xml 文件
+      // 解析 Mapper接口对应的 xml 文件
       loadXmlResource();
+      // 添加进集合表示已经解析过了
       configuration.addLoadedResource(resource);
+      // 设置当前的命名空间
       assistant.setCurrentNamespace(type.getName());
+      // 解析 @CacheNamespace 注解
       parseCache();
+      // 解析 CacheNamespaceRef 注解
       parseCacheRef();
       for (Method method : type.getMethods()) {
+        // 判断是不是桥接方法或接口的 default 方法
         if (!canHaveStatement(method)) {
           continue;
         }
+        // 处理 @Select @SelectProvider 注解
         if (getAnnotationWrapper(method, false, Select.class, SelectProvider.class).isPresent()
             && method.getAnnotation(ResultMap.class) == null) {
+          // 处理结果返回值映射
           parseResultMap(method);
         }
         try {
+          // 处理 @Select @Update @Insert @Delete @SelectProvider @UpdateProvider
+          //  @InsertProvider.class, @DeleteProvider.class 注解
           parseStatement(method);
         } catch (IncompleteElementException e) {
           configuration.addIncompleteMethod(new MethodResolver(this, method));
         }
       }
     }
+    // 解析未处理的方法
     parsePendingMethods();
   }
 
@@ -187,6 +199,7 @@ public class MapperAnnotationBuilder {
   }
 
   private String parseResultMap(Method method) {
+    // 获取方法返回值类型
     Class<?> returnType = getReturnType(method);
     Arg[] args = method.getAnnotationsByType(Arg.class);
     Result[] results = method.getAnnotationsByType(Result.class);
@@ -607,6 +620,7 @@ public class MapperAnnotationBuilder {
   private Optional<AnnotationWrapper> getAnnotationWrapper(Method method, boolean errorIfNoMatch,
       Collection<Class<? extends Annotation>> targetTypes) {
     String databaseId = configuration.getDatabaseId();
+    // 查找所有方法上所有 targetTypes 注解，然后以 DatabaseId 为键，注解信息为 AnnotationWrapper
     Map<String, AnnotationWrapper> statementAnnotations = targetTypes.stream()
         .flatMap(x -> Arrays.stream(method.getAnnotationsByType(x))).map(AnnotationWrapper::new)
         .collect(Collectors.toMap(AnnotationWrapper::getDatabaseId, x -> x, (existing, duplicate) -> {
@@ -615,12 +629,17 @@ public class MapperAnnotationBuilder {
               method.getDeclaringClass().getName() + "." + method.getName()));
         }));
     AnnotationWrapper annotationWrapper = null;
+    // 判断是否有指定数据库厂商ID
     if (databaseId != null) {
+      // 通过数据库厂商ID去获取对应的 SQL 注解片段
       annotationWrapper = statementAnnotations.get(databaseId);
     }
     if (annotationWrapper == null) {
+      // 如果没有指定数据库厂商ID
+      // 那么同样获取一个没有数据库厂商ID的 SQL 注解片段
       annotationWrapper = statementAnnotations.get("");
     }
+    // 判断需不要抛异常，如果没有找到注解SQL片段
     if (errorIfNoMatch && annotationWrapper == null && !statementAnnotations.isEmpty()) {
       // Annotations exist, but there is no matching one for the specified databaseId
       throw new BuilderException(

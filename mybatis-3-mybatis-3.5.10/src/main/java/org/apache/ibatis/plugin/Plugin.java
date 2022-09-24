@@ -15,6 +15,9 @@
  */
 package org.apache.ibatis.plugin;
 
+import org.apache.ibatis.reflection.ExceptionUtil;
+import org.apache.ibatis.util.MapUtil;
+
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
@@ -22,9 +25,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-
-import org.apache.ibatis.reflection.ExceptionUtil;
-import org.apache.ibatis.util.MapUtil;
 
 /**
  * @author Clinton Begin
@@ -42,10 +42,15 @@ public class Plugin implements InvocationHandler {
   }
 
   public static Object wrap(Object target, Interceptor interceptor) {
+    // 解析当前拦截器需要拦截那个类的那个方法
+    // Key 为被拦截的类型，value 为被拦截的方法
     Map<Class<?>, Set<Method>> signatureMap = getSignatureMap(interceptor);
+    // 获取被代理对象的类型
     Class<?> type = target.getClass();
+    // 获取被代理对象的接口
     Class<?>[] interfaces = getAllInterfaces(type, signatureMap);
     if (interfaces.length > 0) {
+      // 使用 JDK 动态代理创建对象
       return Proxy.newProxyInstance(
           type.getClassLoader(),
           interfaces,
@@ -59,6 +64,7 @@ public class Plugin implements InvocationHandler {
     try {
       Set<Method> methods = signatureMap.get(method.getDeclaringClass());
       if (methods != null && methods.contains(method)) {
+        // 调用拦截器插件的 intercept 方法，把当前被代理对象，代理方法，参数传入进去
         return interceptor.intercept(new Invocation(target, method, args));
       }
       return method.invoke(target, args);
@@ -73,8 +79,11 @@ public class Plugin implements InvocationHandler {
     if (interceptsAnnotation == null) {
       throw new PluginException("No @Intercepts annotation was found in interceptor " + interceptor.getClass().getName());
     }
+    // 获取 @Intercepts 注解内的所有 @Signature
+    // 一个 @Signature 就代表一个拦截点
     Signature[] sigs = interceptsAnnotation.value();
     Map<Class<?>, Set<Method>> signatureMap = new HashMap<>();
+    // 遍历所有的 Signature，解析出对应的 class，与方法
     for (Signature sig : sigs) {
       Set<Method> methods = MapUtil.computeIfAbsent(signatureMap, sig.type(), k -> new HashSet<>());
       try {

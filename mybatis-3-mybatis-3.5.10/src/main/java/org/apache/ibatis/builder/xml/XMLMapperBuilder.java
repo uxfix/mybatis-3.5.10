@@ -82,7 +82,7 @@ public class XMLMapperBuilder extends BaseBuilder {
       // 绑定 xml 文件对应的接口类型
       bindMapperForNamespace();
     }
-
+    // 解析未处理的 result 缓存引用 SQL片段
     parsePendingResultMaps();
     parsePendingCacheRefs();
     parsePendingStatements();
