@@ -37,9 +37,12 @@ public class DynamicContext {
     OgnlRuntime.setPropertyAccessor(ContextMap.class, new ContextAccessor());
   }
 
+  /**
+   * 里面包含了当前的方法实参
+   */
   private final ContextMap bindings;
   /**
-   * SQL 语句拼接最终
+   * SQL 语句拼接最终字符串
    */
   private final StringJoiner sqlBuilder = new StringJoiner(" ");
   private int uniqueNumber = 0;

@@ -698,16 +698,22 @@ public class Configuration {
 
   public Executor newExecutor(Transaction transaction, ExecutorType executorType) {
     // 确定要使用的的 Executor 类型
+    // 先判断参数 ExecutorType 是否为空，如果为空使用成员变量的 defaultExecutorType
     executorType = executorType == null ? defaultExecutorType : executorType;
+    // 如果成员变量的 defaultExecutorType 为空，使用 ExecutorType.SIMPLE
     executorType = executorType == null ? ExecutorType.SIMPLE : executorType;
     Executor executor;
     if (ExecutorType.BATCH == executorType) {
+      // 批处理执行器
       executor = new BatchExecutor(this, transaction);
     } else if (ExecutorType.REUSE == executorType) {
+      // 可重用执行器
       executor = new ReuseExecutor(this, transaction);
     } else {
+      // 默认的每次开启一个Statement对象，用完立刻关闭Statement对象
       executor = new SimpleExecutor(this, transaction);
     }
+    // 如果二级缓存开关开启的话，是使用CachingExecutor装饰BaseExecutor的子类
     if (cacheEnabled) {
       executor = new CachingExecutor(executor);
     }

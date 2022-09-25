@@ -158,10 +158,14 @@ public class MapperMethod {
       result = sqlSession.selectList(command.getName(), param);
     }
     // issue #510 Collections & arrays support
+    // 判断方法的返回值是否实际结果的返回值是否兼容一致
     if (!method.getReturnType().isAssignableFrom(result.getClass())) {
+      // 如果方法的返回值数组
       if (method.getReturnType().isArray()) {
+        // 那么将集合转换为数组返回
         return convertToArray(result);
       } else {
+        // 如果不是数组，将实际结果类型转换为方法返回值期望类型
         return convertToDeclaredCollection(sqlSession.getConfiguration(), result);
       }
     }

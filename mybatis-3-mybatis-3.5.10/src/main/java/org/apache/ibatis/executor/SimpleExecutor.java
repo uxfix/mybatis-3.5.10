@@ -62,6 +62,7 @@ public class SimpleExecutor extends BaseExecutor {
       StatementHandler handler = configuration.newStatementHandler(wrapper, ms, parameter, rowBounds, resultHandler, boundSql);
       // 创建数据库连接和Statement对象
       stmt = prepareStatement(handler, ms.getStatementLog());
+      // 执行SQL获取返回值
       return handler.query(stmt, resultHandler);
     } finally {
       closeStatement(stmt);
@@ -85,7 +86,9 @@ public class SimpleExecutor extends BaseExecutor {
 
   private Statement prepareStatement(StatementHandler handler, Log statementLog) throws SQLException {
     Statement stmt;
+    // 获取数据库连接
     Connection connection = getConnection(statementLog);
+    // 创建J DBC 的 Statement
     stmt = handler.prepare(connection, transaction.getTimeout());
     handler.parameterize(stmt);
     return stmt;

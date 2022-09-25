@@ -4,17 +4,21 @@
         "https://mybatis.org/dtd/mybatis-3-config.dtd">
 <configuration>
     <properties resource="jdbc.properties"/>
-
+    <settings>
+        <setting name="cacheEnabled" value="true"/>
+    </settings>
     <typeAliases>
         <package name="com.demo1.model"/>
     </typeAliases>
 
-    <plugins>
-        <plugin interceptor="com.demo1.interceptor.MyExecutorInterceptor"/>
-        <plugin interceptor="com.demo1.interceptor.MyStatementHandlerInterceptor"/>
-        <plugin interceptor="com.demo1.interceptor.MyParameterHandlerInterceptor"/>
-        <plugin interceptor="com.demo1.interceptor.MyResultSetHandlerInterceptor"/>
-    </plugins>
+
+    <!--    <plugins>-->
+    <!--        <plugin interceptor="com.demo1.interceptor.MyExecutorInterceptor"/>-->
+    <!--        <plugin interceptor="com.demo1.interceptor.MyStatementHandlerInterceptor"/>-->
+    <!--        <plugin interceptor="com.demo1.interceptor.MyParameterHandlerInterceptor"/>-->
+    <!--        <plugin interceptor="com.demo1.interceptor.MyResultSetHandlerInterceptor"/>-->
+    <!--    </plugins>-->
+
 
     <environments default="dev">
         <environment id="sit">

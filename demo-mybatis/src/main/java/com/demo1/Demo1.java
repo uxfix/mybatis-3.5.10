@@ -44,7 +44,7 @@ public class Demo1 {
         UserMapper userMapper = sqlSession.getMapper(UserMapper.class);
         User user = new User();
         RowBounds rowBounds = new RowBounds(1,20);
-        List<User> userList = userMapper.select1("李四",rowBounds,22,"188110");
+        List<User> userList = userMapper.select1(null,null,null);
         System.out.println(userList);
         sqlSession.close();
     }

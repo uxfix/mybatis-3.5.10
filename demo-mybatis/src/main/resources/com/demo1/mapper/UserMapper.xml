@@ -16,8 +16,8 @@
             <if test="myName != null and myName != ''">
                 AND name like #{myName}
             </if>
-            <if test="myMb != null and myMb != ''">
-                AND mobile_no like #{myMb}
+            <if test="myMileNo != null and myMileNo != ''">
+                AND mobile_no like #{myMileNo}
             </if>
         </where>
     </select>

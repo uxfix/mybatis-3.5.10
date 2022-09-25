@@ -3,7 +3,6 @@ package com.demo1.mapper;
 import com.demo1.model.User;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
-import org.apache.ibatis.session.RowBounds;
 
 import java.util.List;
 
@@ -14,7 +13,7 @@ import java.util.List;
  */
 public interface UserMapper {
 
-    List<User> select1(@Param("myName") String name, RowBounds rowBounds, Integer age, @Param("myMb") String mobileNo);
+    List<User> select1(@Param("myName") String name, Integer age, @Param("myMileNo") String mobileNo);
 
     List<User> select2(User user);
 
